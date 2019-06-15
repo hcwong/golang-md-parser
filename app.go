@@ -1,0 +1,3 @@
+package golangmdtty
+
+func app() {}
