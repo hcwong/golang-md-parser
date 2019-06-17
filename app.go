@@ -1,7 +1,6 @@
 package golangmdtty
 
 import (
-	"bufio"
 	"log"
 	"os"
 	"strings"
@@ -27,14 +26,6 @@ func Convert(path string) {
 		return
 	}
 	defer file.Close()
-	readBuffer(file)
-}
-
-func readBuffer(file *os.File) {
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		parse()
-	}
 }
 
 func isFileExists(filePath string) (bool, error) {
