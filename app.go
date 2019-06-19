@@ -1,12 +1,13 @@
 package golangmdtty
 
 import (
+	"bufio"
 	"log"
 	"os"
 	"strings"
 )
 
-// Run takes in a pathname to read and convert to terminal output
+// Convert takes in a pathname to read and convert to terminal output. This is the only entry point into the package.
 func Convert(path string) {
 	fileType := strings.Split(path, ".")[1]
 	if fileType != "md" {
@@ -26,6 +27,11 @@ func Convert(path string) {
 		return
 	}
 	defer file.Close()
+
+	p := parser{scanner: *bufio.NewScanner(file)}
+
+	// Parses through the input file and gets all the blocks
+	p.getNextLine()
 }
 
 func isFileExists(filePath string) (bool, error) {

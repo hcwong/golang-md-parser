@@ -6,8 +6,11 @@ import (
 	"strings"
 )
 
+type renderer interface {
+}
+
 // Parser is the object we use to parse the file and output it
-type Parser struct {
+type parser struct {
 	scanner bufio.Scanner
 }
 
@@ -28,11 +31,11 @@ func splitFileFunction(data []byte, atEOF bool) (advanceBy int, block []byte, er
 	return
 }
 
-func (p *Parser) setScannerSplit() {
+func (p *parser) setScannerSplit() {
 	p.scanner.Split(splitFileFunction)
 }
 
-func (p *Parser) getNextLine() {
+func (p *parser) getNextLine() {
 	for p.scanner.Scan() {
 		parseLine(p.scanner.Text())
 	}
