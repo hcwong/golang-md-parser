@@ -3,10 +3,27 @@ package golangmdtty
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"strings"
+
+	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
-type renderer interface {
+// This type implements the BlackFriday renderer
+type TtyRenderer struct {
+	// define some config options here from the config file
+}
+
+func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) (status blackfriday.WalkStatus) {
+	return
+}
+
+func (r *TtyRenderer) RenderHeader(w io.Writer, ast *blackfriday.Node) {
+	return
+}
+
+func (r *TtyRenderer) RenderFooter(w io.Writer, ast *blackfriday.Node) {
+
 }
 
 // Parser is the object we use to parse the file and output it
