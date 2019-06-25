@@ -4,22 +4,87 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
-// This type implements the BlackFriday renderer
+// TtyRenderer implements the BlackFriday renderer
 type TtyRenderer struct {
-	// define some config options here from the config file
+	// TODO: define some config options here from the config file
+	indentationLevel int
+	tabSize          int
+	orderedListNum   []int
+}
+
+func createRenderer(tabSize int) TtyRenderer {
+	return TtyRenderer{tabSize: tabSize, indentationLevel: 0, orderedListNum: []int{}}
 }
 
 func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) (status blackfriday.WalkStatus) {
-	return
+	switch node.Type {
+	case blackfriday.Document:
+	case blackfriday.BlockQuote:
+	case blackfriday.List:
+		if entering {
+			r.indentationLevel++
+			r.orderedListNum = r.orderedListNum[:r.indentationLevel]
+			r.orderedListNum[r.indentationLevel-1] = 0
+		} else {
+			r.indentationLevel--
+			w.Write([]byte("\n"))
+		}
+	case blackfriday.Item:
+		if entering {
+			r.orderedListNum[r.indentationLevel]++
+			i := 0
+			for i < (r.indentationLevel * r.tabSize) {
+				w.Write([]byte(" "))
+				i++
+			}
+			if node.ListData.ListFlags == 0 {
+				w.Write([]byte(strconv.Itoa(r.orderedListNum[r.indentationLevel]) + string(node.ListData.BulletChar) + ". "))
+			} else {
+				w.Write([]byte("* "))
+			}
+		}
+	case blackfriday.Paragraph:
+		if entering {
+			w.Write([]byte("\n\n"))
+		}
+	case blackfriday.Heading:
+	case blackfriday.HorizontalRule:
+	case blackfriday.Emph:
+	case blackfriday.Strong:
+	case blackfriday.Del:
+	case blackfriday.Link:
+	case blackfriday.Image:
+	case blackfriday.Text:
+		if entering {
+
+		}
+	case blackfriday.HTMLBlock:
+	case blackfriday.CodeBlock:
+		if entering {
+
+		}
+	case blackfriday.Softbreak:
+	case blackfriday.Hardbreak:
+	case blackfriday.Code:
+	case blackfriday.HTMLSpan:
+	case blackfriday.Table:
+	case blackfriday.TableCell:
+	case blackfriday.TableHead:
+	case blackfriday.TableBody:
+	case blackfriday.TableRow:
+	}
+
+	return blackfriday.GoToNext
 }
 
 func (r *TtyRenderer) RenderHeader(w io.Writer, ast *blackfriday.Node) {
-	return
+
 }
 
 func (r *TtyRenderer) RenderFooter(w io.Writer, ast *blackfriday.Node) {
@@ -59,6 +124,6 @@ func (p *parser) getNextLine() {
 }
 
 func parseLine(line string) {
-	// TODO fix this, currently just testing
+	// TOFIX
 	fmt.Println(line)
 }
