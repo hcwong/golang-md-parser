@@ -54,6 +54,15 @@ func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering b
 			w.Write([]byte("\n\n"))
 		}
 	case blackfriday.Heading:
+		if entering {
+			headingLevel := node.HeadingData.Level
+			for headingLevel > 0 {
+				w.Write([]byte("#"))
+				headingLevel--
+			}
+		} else {
+			w.Write([]byte("\n"))
+		}
 	case blackfriday.HorizontalRule:
 	case blackfriday.Emph:
 	case blackfriday.Strong:
