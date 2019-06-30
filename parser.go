@@ -69,10 +69,10 @@ func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering b
 	case blackfriday.Del:
 	case blackfriday.Link:
 	case blackfriday.Image:
+	// Text should always be a leaf node
 	case blackfriday.Text:
-		if entering {
-
-		}
+		w.Write(node.Literal)
+		w.Write([]byte("/n"))
 	case blackfriday.HTMLBlock:
 	case blackfriday.CodeBlock:
 		if entering {
