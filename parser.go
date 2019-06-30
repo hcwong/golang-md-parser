@@ -96,8 +96,14 @@ func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering b
 	case blackfriday.Softbreak:
 	case blackfriday.Hardbreak:
 	case blackfriday.Code:
+		if entering {
+			w.Write(node.Literal)
+		}
 	case blackfriday.HTMLSpan:
 	case blackfriday.Table:
+		if entering {
+			r.current = blackfriday.Table
+		}
 	case blackfriday.TableCell:
 	case blackfriday.TableHead:
 	case blackfriday.TableBody:
