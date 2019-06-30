@@ -13,6 +13,7 @@ import (
 // TtyRenderer implements the BlackFriday renderer
 type TtyRenderer struct {
 	// TODO: define some config options here from the config file
+	current          blackfriday.NodeType // current provides child nodes with context of non-immediate parent nodes
 	indentationLevel int
 	tabSize          int
 	orderedListNum   []int
@@ -68,15 +69,29 @@ func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering b
 	case blackfriday.Strong:
 	case blackfriday.Del:
 	case blackfriday.Link:
+		if entering {
+			w.Write([]byte("["))
+		} else {
+			w.Write([]byte("]"))
+			w.Write([]byte("("))
+			w.Write(node.LinkData.Destination)
+			w.Write([]byte(")"))
+		}
 	case blackfriday.Image:
 	// Text should always be a leaf node
 	case blackfriday.Text:
-		w.Write(node.Literal)
-		w.Write([]byte("/n"))
+		if entering {
+			w.Write(node.Literal)
+		}
 	case blackfriday.HTMLBlock:
 	case blackfriday.CodeBlock:
 		if entering {
-
+			w.Write([]byte("````\n"))
+			r.indentationLevel++
+			r.current = blackfriday.CodeBlock
+		} else {
+			r.indentationLevel--
+			w.Write([]byte("````\n"))
 		}
 	case blackfriday.Softbreak:
 	case blackfriday.Hardbreak:
@@ -98,6 +113,15 @@ func (r *TtyRenderer) RenderHeader(w io.Writer, ast *blackfriday.Node) {
 
 func (r *TtyRenderer) RenderFooter(w io.Writer, ast *blackfriday.Node) {
 
+}
+
+// Output the indentation of a node automatically
+func (r *TtyRenderer) outputIndentation(w io.Writer) {
+	i := 0
+	for i < (r.indentationLevel * r.tabSize) {
+		w.Write([]byte(" "))
+		i++
+	}
 }
 
 // Parser is the object we use to parse the file and output it
