@@ -84,6 +84,14 @@ func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering b
 			w.Write(node.Literal)
 		}
 	case blackfriday.HTMLBlock:
+		if entering {
+			w.Write([]byte("```` HTML\n"))
+			r.indentationLevel++
+			r.current = blackfriday.CodeBlock
+		} else {
+			r.indentationLevel--
+			w.Write([]byte("````\n"))
+		}
 	case blackfriday.CodeBlock:
 		if entering {
 			w.Write([]byte("````\n"))
