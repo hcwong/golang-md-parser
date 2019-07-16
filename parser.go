@@ -2,28 +2,142 @@ package golangmdtty
 
 import (
 	"bufio"
-	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
-// This type implements the BlackFriday renderer
+// TtyRenderer implements the BlackFriday renderer
 type TtyRenderer struct {
-	// define some config options here from the config file
+	// TODO: define some config options here from the config file
+	current          blackfriday.NodeType // current provides child nodes with context of non-immediate parent nodes
+	indentationLevel int
+	tabSize          int
+	orderedListNum   []int
+}
+
+func createRenderer(tabSize int) TtyRenderer {
+	return TtyRenderer{tabSize: tabSize, indentationLevel: 0, orderedListNum: []int{}}
 }
 
 func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) (status blackfriday.WalkStatus) {
-	return
+	switch node.Type {
+	case blackfriday.Document:
+	case blackfriday.BlockQuote:
+	case blackfriday.List:
+		if entering {
+			r.indentationLevel++
+			r.orderedListNum = r.orderedListNum[:r.indentationLevel]
+			r.orderedListNum[r.indentationLevel-1] = 0
+		} else {
+			r.indentationLevel--
+			w.Write([]byte("\n"))
+		}
+	case blackfriday.Item:
+		if entering {
+			r.orderedListNum[r.indentationLevel]++
+			i := 0
+			for i < (r.indentationLevel * r.tabSize) {
+				w.Write([]byte(" "))
+				i++
+			}
+			if node.ListData.ListFlags == 0 {
+				w.Write([]byte(strconv.Itoa(r.orderedListNum[r.indentationLevel]) + string(node.ListData.BulletChar) + ". "))
+			} else {
+				w.Write([]byte("* "))
+			}
+		}
+	case blackfriday.Paragraph:
+		if entering {
+			w.Write([]byte("\n\n"))
+		}
+	case blackfriday.Heading:
+		if entering {
+			headingLevel := node.HeadingData.Level
+			for headingLevel > 0 {
+				w.Write([]byte("#"))
+				headingLevel--
+			}
+		} else {
+			w.Write([]byte("\n"))
+		}
+	case blackfriday.HorizontalRule:
+	case blackfriday.Emph:
+	case blackfriday.Strong:
+	case blackfriday.Del:
+	case blackfriday.Link:
+		if entering {
+			w.Write([]byte("["))
+		} else {
+			w.Write([]byte("]"))
+			w.Write([]byte("("))
+			w.Write(node.LinkData.Destination)
+			w.Write([]byte(")"))
+		}
+	case blackfriday.Image:
+		if entering {
+			w.Write([]byte("Images not shown"))
+		}
+	// Text should always be a leaf node
+	case blackfriday.Text:
+		if entering {
+			w.Write(node.Literal)
+		}
+	case blackfriday.HTMLBlock:
+		if entering {
+			w.Write([]byte("```` HTML\n"))
+			r.indentationLevel++
+			r.current = blackfriday.CodeBlock
+		} else {
+			r.indentationLevel--
+			w.Write([]byte("````\n"))
+		}
+	case blackfriday.CodeBlock:
+		if entering {
+			w.Write([]byte("````\n"))
+			r.indentationLevel++
+			r.current = blackfriday.CodeBlock
+		} else {
+			r.indentationLevel--
+			w.Write([]byte("````\n"))
+		}
+	case blackfriday.Softbreak:
+	case blackfriday.Hardbreak:
+	case blackfriday.Code:
+		if entering {
+			w.Write(node.Literal)
+		}
+	case blackfriday.HTMLSpan:
+	case blackfriday.Table:
+		if entering {
+			r.current = blackfriday.Table
+		}
+	case blackfriday.TableCell:
+	case blackfriday.TableHead:
+	case blackfriday.TableBody:
+	case blackfriday.TableRow:
+	}
+
+	return blackfriday.GoToNext
 }
 
 func (r *TtyRenderer) RenderHeader(w io.Writer, ast *blackfriday.Node) {
-	return
+
 }
 
 func (r *TtyRenderer) RenderFooter(w io.Writer, ast *blackfriday.Node) {
 
+}
+
+// Output the indentation of a node automatically
+func (r *TtyRenderer) outputIndentation(w io.Writer) {
+	i := 0
+	for i < (r.indentationLevel * r.tabSize) {
+		w.Write([]byte(" "))
+		i++
+	}
 }
 
 // Parser is the object we use to parse the file and output it
@@ -53,12 +167,12 @@ func (p *parser) setScannerSplit() {
 }
 
 func (p *parser) getNextLine() {
+	renderer := createRenderer(4)
 	for p.scanner.Scan() {
-		parseLine(p.scanner.Text())
+		parseLine(p.scanner.Text(), &renderer)
 	}
 }
 
-func parseLine(line string) {
-	// TODO fix this, currently just testing
-	fmt.Println(line)
+func parseLine(line string, renderer *TtyRenderer) {
+	blackfriday.Run([]byte(line), blackfriday.WithRenderer(renderer))
 }
