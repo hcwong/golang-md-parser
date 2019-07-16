@@ -2,7 +2,6 @@ package golangmdtty
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -78,6 +77,9 @@ func (r *TtyRenderer) RenderNode(w io.Writer, node *blackfriday.Node, entering b
 			w.Write([]byte(")"))
 		}
 	case blackfriday.Image:
+		if entering {
+			w.Write([]byte("Images not shown"))
+		}
 	// Text should always be a leaf node
 	case blackfriday.Text:
 		if entering {
@@ -165,12 +167,12 @@ func (p *parser) setScannerSplit() {
 }
 
 func (p *parser) getNextLine() {
+	renderer := createRenderer(4)
 	for p.scanner.Scan() {
-		parseLine(p.scanner.Text())
+		parseLine(p.scanner.Text(), &renderer)
 	}
 }
 
-func parseLine(line string) {
-	// TOFIX
-	fmt.Println(line)
+func parseLine(line string, renderer *TtyRenderer) {
+	blackfriday.Run([]byte(line), blackfriday.WithRenderer(renderer))
 }
